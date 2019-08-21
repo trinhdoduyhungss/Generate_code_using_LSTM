@@ -1,0 +1,188 @@
+<start>
+import numpy as np
+import pandas as pd
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.layers import Dropout
+from keras.layers import LSTM
+from keras.utils import np_utils
+text = (open("<File data-example: data.txt>").read())
+text = text.lower()
+characters = sorted(list(set(text)))
+n_to_char = {n:char for n, char in enumerate(characters)}
+char_to_n = {char:n for n, char in enumerate(characters)}
+X = []
+Y = []
+length = len(text)
+seq_length = 100
+for i in range(0, length-seq_length, 1):
+    sequence = text[i:i + seq_length]
+    label =text[i + seq_length]
+    X.append([char_to_n[char] for char in sequence])
+    Y.append(char_to_n[label])
+X_modified = np.reshape(X, (len(X), seq_length, 1))
+X_modified = X_modified / float(len(characters))
+Y_modified = np_utils.to_categorical(Y)
+model = Sequential()
+model.add(LSTM(400, input_shape=(X_modified.shape[1], X_modified.shape[2]), return_sequences=True))
+model.add(Dropout(0.2))
+model.add(LSTM(400))
+model.add(Dropout(0.2))
+model.add(Dense(Y_modified.shape[1], activation='softmax'))
+model.compile(loss='categorical_crossentropy', optimizer='adam')
+model.fit(X_modified, Y_modified, epochs=100, batch_size=50)
+model.save_weights('<File path>.h5')
+model.load_weights('<File path>.h5')
+string_mapped = X[99]
+full_string = [n_to_char[value] for value in string_mapped]
+# generating characters
+for i in range(400):
+    x = np.reshape(string_mapped,(1,len(string_mapped), 1))
+    x = x / float(len(characters))
+    pred_index = np.argmax(model.predict(x, verbose=0))
+    seq = [n_to_char[value] for value in string_mapped]
+    full_string.append(n_to_char[pred_index])
+    string_mapped.append(pred_index)
+    string_mapped = string_mapped[1:len(string_mapped)]
+txt=""
+for char in full_string:
+    txt = txt+char
+print(txt)
+<eof>
+
+<start>
+import numpy as np
+class NeuralNetwork():    
+    def __init__(self):
+        np.random.seed(1)
+        self.synaptic_weights = 2 * np.random.random((3, 1)) - 1
+
+    def sigmoid(self, x):
+        return 1 / (1 + np.exp(-x))
+
+    def sigmoid_derivative(self, x):
+        return x * (1 - x)
+
+    def train(self, training_inputs, training_outputs, training_iterations):
+        for iteration in range(training_iterations):
+            output = self.think(training_inputs)
+            error = training_outputs - output
+            adjustments = np.dot(training_inputs.T, error * self.sigmoid_derivative(output))
+
+            self.synaptic_weights += adjustments
+
+    def think(self, inputs):
+        inputs = inputs.astype(float)
+        output = self.sigmoid(np.dot(inputs, self.synaptic_weights))
+        return output
+
+
+if __name__ == "__main__":
+    neural_network = NeuralNetwork()
+    print("Beginning Randomly Generated Weights: ")
+    print(neural_network.synaptic_weights)
+    training_inputs = np.array([[0,0,0],
+                                [1,1,0],
+                                [1,0,0],
+                                [0,1,0]])
+    training_outputs = np.array([[0,1,1,0]]).T
+    neural_network.train(training_inputs, training_outputs, 15000)
+    print("Ending Weights After Training: ")
+    print(neural_network.synaptic_weights)
+    user_input_one = str(input("User Input: "))
+    Input_test = user_input_one
+    Array_input_test = [ int(value) for value in Input_test]
+    print("Considering New Situation: ", user_input_one, user_input_two)
+    print("New Output data: ")
+    print(neural_network.think(np.array([Array_input_test])))
+    print("Wow, we did it!")
+<eof>
+
+<start>
+from keras.callbacks import LambdaCallback
+from keras.models import Sequential
+from keras.layers import Dropout
+from keras.layers import Dense
+from keras.layers import LSTM
+from keras.optimizers import RMSprop
+from keras.utils.data_utils import get_file
+import numpy as np
+import random
+import sys
+import io
+import requests
+import re
+text = (open("<File data-example: data.txt>").read())
+processed_text = text
+print('corpus length:', len(processed_text))
+chars = sorted(list(set(processed_text)))
+print('total chars:', len(chars))
+char_indices = dict((c, i) for i, c in enumerate(chars))
+indices_char = dict((i, c) for i, c in enumerate(chars))
+maxlen = 100
+step = 1
+sentences = []
+next_chars = []
+for i in range(0, len(processed_text) - maxlen, step):
+    sentences.append(processed_text[i: i + maxlen])
+    next_chars.append(processed_text[i + maxlen])
+print('nb sequences:', len(sentences))
+print('sentences:', sentences)
+print('Vectorization...')
+x = np.zeros((len(sentences), maxlen, len(chars)), dtype=np.bool)
+y = np.zeros((len(sentences), len(chars)), dtype=np.bool)
+for i, sentence in enumerate(sentences):
+    for t, char in enumerate(sentence):
+        x[i, t, char_indices[char]] = 1
+    y[i, char_indices[next_chars[i]]] = 1
+print('Build model...')
+model = Sequential()
+model.add(LSTM(800, input_shape=(maxlen, len(chars)), return_sequences=True))
+model.add(Dropout(0.1))
+model.add(LSTM(800, return_sequences=True))
+model.add(Dropout(0.1))
+model.add(LSTM(800))
+model.add(Dropout(0.1))
+model.add(Dense(len(chars), activation='softmax'))
+optimizer = RMSprop(lr=0.01)
+model.compile(loss='categorical_crossentropy', optimizer='adam', metrics = ['accuracy'])
+def sample(preds, temperature=1.0):
+    # helper function to sample an index from a probability array
+    preds = np.asarray(preds).astype('float64')
+    preds = np.log(preds) / temperature
+    exp_preds = np.exp(preds)
+    preds = exp_preds / np.sum(exp_preds)
+    probas = np.random.multinomial(1, preds, 1)
+    return np.argmax(probas)
+def on_epoch_end(epoch, _):
+    # Function invoked at end of each epoch. Prints generated text.
+    print("****************************************************************************")
+    print('----- Generating text after Epoch: %d' % epoch)
+
+    start_index = random.randint(0, len(processed_text) - maxlen - 1)
+    for temperature in [0.2, 0.5, 1.0, 1.2]:
+        print('----- temperature:', temperature)
+
+        generated = ''
+        sentence = processed_text[start_index: start_index + maxlen]
+        generated += sentence
+        print('----- Generating with seed: "' + sentence + '"')
+        sys.stdout.write(generated)
+
+        for i in range(400):
+            x_pred = np.zeros((1, maxlen, len(chars)))
+            for t, char in enumerate(sentence):
+                x_pred[0, t, char_indices[char]] = 1.
+
+            preds = model.predict(x_pred, verbose=0)[0]
+            next_index = sample(preds, temperature)
+            next_char = indices_char[next_index]
+
+            generated += next_char
+            sentence = sentence[1:] + next_char
+
+            sys.stdout.write(next_char)
+            sys.stdout.flush()
+model.fit(x, y,batch_size=100,epochs=80)
+model.save_weights('<File path>.h5')
+<eof>
