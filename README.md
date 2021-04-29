@@ -1,4 +1,4 @@
-# LSTM
+# Generate code using LSTM model
 # Tự động chọn câu predict
 """ ----- Generating with seed: "etwork.think(np.array([Array_input_test])))
     pr"
@@ -11,7 +11,8 @@ from keras.callbacks import LambdaCallback
 from keras.models import Sequential
 from keras.layers import Dropout
 from keras.layers import Dense
-from keras.layers i """
+from keras.layers i 
+"""
   
 
 # Câu tự đưa vào:
@@ -23,4 +24,5 @@ generated = ''
 srnts'moppt aps(aape']aata(ha'))otc(carrcnossasutx),lrn()rtctsshs))
 srin =notutisi:mor knt>Lyyp
 mort LamddC
-imortssot  ip """
+imortssot  ip 
+"""
